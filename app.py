@@ -18,15 +18,6 @@ torch.manual_seed(42)
 # Load the trained weather prediction model
 loaded_model = joblib.load('model.joblib')
 
-    # Display an image from a file path
-image_path = 'weather-images.png'  
-st.image(image_path, caption='Image Caption', use_column_width=True)  # Adjust caption and width settings
-    
-# Display an image from a URL
-image_url = 'weather-images.jpg'
-st.image(image_url, caption='Image Caption', use_column_width=True)
-
-
 # Weather API key and endpoint
 WEATHER_API_KEY = '377aacecc1592f1be075beb71ab22ea0'
 WEATHER_API_URL = 'http://api.openweathermap.org/data/2.5/weather'
