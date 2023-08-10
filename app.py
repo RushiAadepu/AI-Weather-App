@@ -99,6 +99,9 @@ def main():
             st.write(f"Sunrise Time: {weather_data['sunrise_time']}")
             st.write(f"Sunset Time: {weather_data['sunset_time']}")
 
+            image_path = 'weather-images.jpg' 
+            st.image(image_path, caption='Image Caption', use_column_width=True)
+
             features = [
                 weather_data['temperature'],
                 weather_data['humidity'],
@@ -106,6 +109,8 @@ def main():
                 weather_data['pressure'],
                 weather_data['cloudiness']
             ]
+
+            
             predicted_condition = predict_weather([features])[0]
             st.markdown(f"<h2>Today's Predicted Weather Condition: {predicted_condition}</h2>", unsafe_allow_html=True)
             if predicted_condition == 'normal':
