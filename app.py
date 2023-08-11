@@ -100,7 +100,7 @@ def main():
             st.write(f"Sunset Time: {weather_data['sunset_time']}")
 
             image_path = 'weather-images.jpg' 
-            st.image(image_path, caption='Image Caption', use_column_width=True)
+            st.image(image_path, caption='Types of Weather', use_column_width=True)
 
             features = [
                 weather_data['temperature'],
@@ -145,7 +145,7 @@ def main():
 
         st.subheader('Chat with AI:')
         user_input = st.text_input("You: ")
-        if st.checkbox("Chat"):
+        if st.button("Chat"):
             if user_input:
                 response = generate_response(user_input)
                 st.write(f"AI: {response}")
