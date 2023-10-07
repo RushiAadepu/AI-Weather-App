@@ -5,7 +5,6 @@ import joblib
 from transformers import pipeline
 from sklearn.tree import DecisionTreeClassifier
 import transformers
-import torch
 
 # Load pre-trained GPT2 model
 model_name = "gpt2"  # You can also try other models like "gpt2-medium", "gpt2-large", etc.
