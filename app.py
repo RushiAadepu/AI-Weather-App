@@ -2,30 +2,53 @@ import streamlit as st
 import requests
 import datetime
 import joblib
-from transformers import pipeline
-from sklearn.tree import DecisionTreeClassifier
-import transformers
-
-# Load pre-trained GPT2 model
-model_name = "gpt2"  # You can also try other models like "gpt2-medium", "gpt2-large", etc.
-tokenizer = transformers.GPT2Tokenizer.from_pretrained(model_name)
-gpt2_model = transformers.GPT2LMHeadModel.from_pretrained(model_name)
-
-# Set the seed for reproducibility
-torch.manual_seed(42)
-
-# Load the trained weather prediction model
-loaded_model = joblib.load('model.joblib')
 
 # Weather API key and endpoint
 WEATHER_API_KEY = '377aacecc1592f1be075beb71ab22ea0'
 WEATHER_API_URL = 'http://api.openweathermap.org/data/2.5/weather'
 
+# RapidAPI key for ChatGPT
+RAPIDAPI_KEY = '3965b429bfmsh160e49419126035p1d84efjsn4c96f585201e'  # Replace with your RapidAPI key
+
 st.markdown(
     f"""
     <style>
     body {{
-        background-color: #87ceeb;
+        font-family: Arial, sans-serif;
+    }}
+    /* Common styles */
+    .container {{
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }}
+
+    /* Weather-specific styles */
+    .normal-weather {{
+        background-color: #87ceeb; /* Light blue for normal weather */
+        color: #333; /* Dark text color for visibility */
+    }}
+    .cloudy-weather {{
+        background-color: #ddd; /* Gray for cloudy weather */
+        color: #333;
+    }}
+    .sunny-weather {{
+        background-color: #ffdb58; /* Yellow for sunny weather */
+        color: #333;
+    }}
+    .partly-cloudy-weather {{
+        background-color: #87ceeb; /* Light blue for partly cloudy */
+        color: #333;
+    }}
+    .hot-weather {{
+        background-color: #ff5733; /* Orange for hot weather */
+        color: #fff; /* White text for visibility */
+    }}
+    .rainy-weather {{
+        background-color: #4682b4; /* Steel blue for rainy weather */
+        color: #fff;
     }}
     </style>
     """,
@@ -70,26 +93,51 @@ def get_weather(location):
 
         return weather_info
 
-
 def predict_weather(features):
-    prediction = loaded_model.predict(features)
-    return prediction
+    # Reshape the 1D features list into a 2D array
+    features_2d = [features]
 
+    loaded_model = joblib.load('model.joblib')
+    prediction = loaded_model.predict(features_2d)
+    return prediction[0]
 
-def generate_response(prompt, max_length=100):
-    input_ids = tokenizer.encode(prompt, return_tensors="pt")
-    output = gpt2_model.generate(input_ids, max_length=max_length, num_return_sequences=1)
-    generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
-    return generated_text
+def generate_response(prompt):
+    url = "https://open-ai21.p.rapidapi.com/conversationgpt"
+    headers = {
+        "content-type": "application/json",
+        "X-RapidAPI-Key": "3965b429bfmsh160e49419126035p1d84efjsn4c96f585201e",  # Use your RapidAPI key
+        "X-RapidAPI-Host": "open-ai21.p.rapidapi.com"
+    }
+    payload = {
+        "messages": [
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    }
 
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code == 200:
+        try:
+            response_data = response.json()
+            return response_data
+        except Exception as e:
+            return f"An error occurred: {str(e)}"
+    else:
+        return f"Failed to get a response from the ChatGPT API. Status code: {response.status_code}"
 
 def main():
     st.title('AI Weather and Chatbot App')
 
     location = st.text_input('Enter location:')
+
     if st.button('Get Weather'):
         weather_data = get_weather(location)
+
         if weather_data is not None:
+
             st.write(f"Temperature: {weather_data.get('temperature', 'N/A')}°C")
             st.write(f"Humidity: {weather_data.get('humidity', 'N/A')}%")
             st.write(f"Wind Speed: {weather_data['wind_speed']} km/h")
@@ -98,7 +146,7 @@ def main():
             st.write(f"Sunrise Time: {weather_data['sunrise_time']}")
             st.write(f"Sunset Time: {weather_data['sunset_time']}")
 
-            image_path = 'weather-images.jpg' 
+            image_path = 'weather-images.jpg'
             st.image(image_path, caption='Types of Weather', use_column_width=True)
 
             features = [
@@ -108,9 +156,8 @@ def main():
                 weather_data['pressure'],
                 weather_data['cloudiness']
             ]
+            predicted_condition = predict_weather(features)
 
-            
-            predicted_condition = predict_weather([features])[0]
             st.markdown(f"<h2>Today's Predicted Weather Condition: {predicted_condition}</h2>", unsafe_allow_html=True)
             if predicted_condition == 'normal':
                 st.markdown(
@@ -136,19 +183,20 @@ def main():
                             unsafe_allow_html=True)
             else:
                 st.write("The weather condition is uncertain. Stay prepared for any changes.")
-
         else:
             st.warning(
                 "Oops! The weather information for the provided location is not available. Please make sure the location is valid and try again.")
             return None
 
-        st.subheader('Chat with AI:')
-        user_input = st.text_input("You: ")
-        if st.button("Chat"):
-            if user_input:
-                response = generate_response(user_input)
-                st.write(f"AI: {response}")
-
+    st.subheader('Chat with AI:')
+    st.markdown(
+        "Feel free to ask any weather-related questions.")
+    user_input = st.text_input("You: ")
+    if st.checkbox("Chat"):
+        if user_input:
+            response = generate_response(user_input)
+            assistant_reply = response.get('GPT', 'N/A')  # Extract GPT response content
+            st.write(f"AI: {assistant_reply}")
 
 if __name__ == '__main__':
     main()
