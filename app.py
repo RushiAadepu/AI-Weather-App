@@ -2,15 +2,18 @@ import streamlit as st
 import requests
 import datetime
 import joblib
+from langchain.llms import GooglePalm
 
 # Weather API key and endpoint
 WEATHER_API_KEY = '377aacecc1592f1be075beb71ab22ea0'
 WEATHER_API_URL = 'http://api.openweathermap.org/data/2.5/weather'
 
-# RapidAPI key for ChatGPT
-RAPIDAPI_KEY = '3965b429bfmsh160e49419126035p1d84efjsn4c96f585201e'  # Replace with your RapidAPI key
+# Set your Google API key
+GOOGLE_API_KEY = "AIzaSyBS8sGmcNxPNJKV_kYOnmACi-uFe_wSkEA"
 
-# Include FontAwesome library
+# Initialize the model
+llm = GooglePalm(google_api_key=GOOGLE_API_KEY, temperature=0.7)
+
 st.markdown(
     f"""
     <style>
@@ -106,31 +109,14 @@ def predict_weather(features):
 
 
 def generate_response(prompt):
-    url = "https://open-ai21.p.rapidapi.com/conversationgpt"
-    headers = {
-        "content-type": "application/json",
-        "X-RapidAPI-Key": "3965b429bfmsh160e49419126035p1d84efjsn4c96f585201e",  # Use your RapidAPI key
-        "X-RapidAPI-Host": "open-ai21.p.rapidapi.com"
-    }
-    payload = {
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    }
-
-    response = requests.post(url, json=payload, headers=headers)
-
-    if response.status_code == 200:
-        try:
-            response_data = response.json()
-            return response_data
-        except Exception as e:
-            return f"An error occurred: {str(e)}"
+    response = llm.generate([prompt])
+    generations = response.generations
+    if generations:
+        generated_text = generations[0][0].text  # Extract the generated text from the response
+        return generated_text
     else:
-        return f"Failed to get a response from the ChatGPT API. Status code: {response.status_code}"
+        return "No response generated"
+
 
 
 def main():
@@ -209,7 +195,7 @@ def main():
     if st.checkbox("Chat"):
         if user_input:
             response = generate_response(user_input)
-            assistant_reply = response.get('GPT', 'N/A')  # Extract GPT response content
+            assistant_reply = response  # Extract LaMDA response content
             st.write(f"AI: {assistant_reply}")
 
 
